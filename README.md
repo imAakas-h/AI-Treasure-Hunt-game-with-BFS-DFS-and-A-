@@ -6,8 +6,8 @@ An interactive maze-based game that visually demonstrates three classic AI pathf
 
 ## 🎮 Live Demo
 
-👉  https://imaakas-h.github.io/AI-Treasure-Hunt-game-with-BFS-DFS-and-A-/
----
+👉  [https://imaakas-h.github.io/AI-Treasure-Hunt-game-with-BFS-DFS-and-A-/
+---](https://imAakas-h.github.io/AI-Treasure-Hunt-game-with-BFS-DFS-and-A-/ai_treasure_hunt_bfs_dfs_astar.html)
 
 ## 📸 Preview
 
