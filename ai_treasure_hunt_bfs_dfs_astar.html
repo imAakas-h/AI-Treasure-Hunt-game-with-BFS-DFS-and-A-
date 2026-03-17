@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Treasure Hunt — BFS, DFS & A*</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #f4f1e8;
+    font-family: 'Crimson Text', serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 40px;
+  }
+
+  #app {
+    width: 100%;
+    max-width: 860px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 26px;
+    font-weight: 700;
+    text-align: center;
+    color: #2c2c2a;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 15px;
+    color: #5f5e5a;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .algo-select {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 9px 16px;
+    border: 1.5px solid #b4b2a9;
+    border-radius: 8px;
+    background: #fff;
+    color: #2c2c2a;
+    cursor: pointer;
+    min-width: 190px;
+  }
+
+  .algo-select:focus { outline: none; border-color: #185FA5; }
+
+  .btn {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 9px 18px;
+    border: 1px solid #b4b2a9;
+    border-radius: 8px;
+    background: #fff;
+    color: #2c2c2a;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+
+  .btn:hover { background: #f1efe8; border-color: #888780; }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-run {
+    background: #3B6D11;
+    color: #EAF3DE;
+    border-color: #3B6D11;
+  }
+  .btn-run:hover { background: #27500A; border-color: #27500A; color: #EAF3DE; }
+
+  .speed-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #5f5e5a;
+  }
+
+  .speed-wrap input { width: 80px; cursor: pointer; }
+
+  .main-area {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .grid-wrap { position: relative; }
+
+  canvas {
+    display: block;
+    border-radius: 10px;
+    border: 1.5px solid #b4b2a9;
+    cursor: pointer;
+    background: #fff;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+  }
+
+  .side-panel {
+    width: 220px;
+    flex-shrink: 0;
+  }
+
+  .legend-box, .stats-box, .log-box, .algo-info-box {
+    background: #fff;
+    border: 0.5px solid #d3d1c7;
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .box-title {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #888780;
+    letter-spacing: 0.8px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-size: 13px;
+    color: #3d3d3a;
+  }
+
+  .swatch {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 0.5px solid rgba(0,0,0,0.12);
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #3d3d3a;
+    padding: 4px 0;
+    border-bottom: 0.5px solid #e4e1d6;
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-val { font-weight: 600; font-family: 'Cinzel', serif; font-size: 12px; }
+
+  .log-box { max-height: 145px; overflow-y: auto; }
+
+  #log-list {
+    list-style: none;
+    font-size: 12px;
+    color: #5f5e5a;
+    line-height: 1.7;
+  }
+
+  #log-list li { border-bottom: 0.5px solid #e4e1d6; padding: 1px 0; }
+  #log-list li:last-child { border-bottom: none; color: #2c2c2a; font-weight: 600; }
+
+  .algo-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .badge-bfs   { background: #B5D4F4; color: #0C447C; }
+  .badge-dfs   { background: #F7C1C1; color: #791F1F; }
+  .badge-astar { background: #C0DD97; color: #27500A; }
+
+  .algo-desc {
+    font-size: 12px;
+    color: #5f5e5a;
+    font-style: italic;
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+
+  .tip {
+    font-size: 11px;
+    color: #888780;
+    text-align: center;
+    margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* scrollbar styling */
+  .log-box::-webkit-scrollbar { width: 4px; }
+  .log-box::-webkit-scrollbar-track { background: transparent; }
+  .log-box::-webkit-scrollbar-thumb { background: #d3d1c7; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <h1>AI Treasure Hunt</h1>
+  <p class="subtitle">Watch BFS, DFS &amp; A* navigate the maze to find the treasure</p>
+
+  <div class="controls">
+    <select class="algo-select" id="algo-sel" onchange="onAlgoChange()">
+      <option value="bfs">Breadth-First Search (BFS)</option>
+      <option value="dfs">Depth-First Search (DFS)</option>
+      <option value="astar">A* (A-Star)</option>
+    </select>
+    <button class="btn btn-run" onclick="runAlgo()">Run Algorithm</button>
+    <button class="btn" onclick="resetMaze()">New Maze</button>
+    <div class="speed-wrap">
+      <span>Speed</span>
+      <input type="range" id="speed" min="1" max="10" value="5">
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="grid-wrap">
+      <canvas id="c" width="572" height="572"></canvas>
+      <p class="tip">Click cells to toggle walls &nbsp;|&nbsp; Drag 🧭 or 💰 to move start/goal</p>
+    </div>
+
+    <div class="side-panel">
+      <div class="legend-box">
+        <div class="box-title">Legend</div>
+        <div class="legend-item"><div class="swatch" style="background:#e8c56a"></div> Explorer (Start)</div>
+        <div class="legend-item"><div class="swatch" style="background:#e8593c"></div> Treasure (Goal)</div>
+        <div class="legend-item"><div class="swatch" style="background:#3d3d3a"></div> Wall / Obstacle</div>
+        <div class="legend-item"><div class="swatch" style="background:#b5d4f4"></div> BFS Explored</div>
+        <div class="legend-item"><div class="swatch" style="background:#f7c1c1"></div> DFS Explored</div>
+        <div class="legend-item"><div class="swatch" style="background:#c0dd97"></div> A* Explored</div>
+        <div class="legend-item"><div class="swatch" style="background:#EF9F27;border:2px solid #BA7517"></div> Final Path</div>
+      </div>
+
+      <div class="algo-info-box">
+        <div class="box-title">Algorithm Info</div>
+        <span class="algo-badge badge-bfs" id="algo-badge">BFS</span>
+        <p class="algo-desc" id="algo-desc">Explores all neighbors level by level. Guarantees the shortest path.</p>
+      </div>
+
+      <div class="stats-box">
+        <div class="box-title">Statistics</div>
+        <div class="stat-row"><span>Cells Visited</span><span class="stat-val" id="s-visited">—</span></div>
+        <div class="stat-row"><span>Path Length</span><span class="stat-val" id="s-path">—</span></div>
+        <div class="stat-row"><span>Status</span><span class="stat-val" id="s-status">Ready</span></div>
+      </div>
+
+      <div class="log-box">
+        <div class="box-title">Log</div>
+        <ul id="log-list"><li>Select an algorithm and press Run.</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ROWS = 11, COLS = 11, CELL = 52;
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const EMPTY = 0, WALL = 1, START = 2, GOAL = 3;
+
+let grid = [], startPos = [1,1], goalPos = [ROWS-2, COLS-2];
+let animQueue = [], animTimer = null, running = false;
+let visitedSet = new Set(), pathCells = [], visiting = null;
+
+const COLORS = {
+  empty:   '#f8f6f0',
+  wall:    '#3d3d3a',
+  start:   '#e8c56a',
+  goal:    '#e8593c',
+  visited_bfs:   '#b5d4f4',
+  visited_dfs:   '#f7c1c1',
+  visited_astar: '#c0dd97',
+  visiting: '#EF9F27',
+  path:    '#EF9F27',
+  path_border: '#BA7517',
+  grid:    '#e4e1d6',
+};
+
+function makeGrid() {
+  grid = Array.from({length:ROWS}, (_,r) =>
+    Array.from({length:COLS}, (_,c) => {
+      if(r===0||r===ROWS-1||c===0||c===COLS-1) return WALL;
+      return EMPTY;
+    })
+  );
+  for(let r=1;r<ROWS-1;r++) for(let c=1;c<COLS-1;c++) {
+    if(Math.random()<0.27) grid[r][c]=WALL;
+  }
+  grid[startPos[0]][startPos[1]] = START;
+  grid[goalPos[0]][goalPos[1]] = GOAL;
+  clearOverlay();
+}
+
+function clearOverlay() {
+  visitedSet = new Set();
+  pathCells = [];
+  visiting = null;
+  updateStats(null, null, 'Ready');
+  clearLog();
+}
+
+function key(r,c){return r*100+c;}
+
+function draw() {
+  const algo = document.getElementById('algo-sel').value;
+  const visitColor = COLORS['visited_'+algo] || COLORS.visited_bfs;
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  for(let r=0;r<ROWS;r++) {
+    for(let c=0;c<COLS;c++) {
+      const x=c*CELL, y=r*CELL;
+      const k=key(r,c);
+      let fill = COLORS.empty;
+
+      if(grid[r][c]===WALL) fill=COLORS.wall;
+      else if(grid[r][c]===START) fill=COLORS.start;
+      else if(grid[r][c]===GOAL) fill=COLORS.goal;
+      else if(visiting && visiting[0]===r && visiting[1]===c) fill=COLORS.visiting;
+      else if(visitedSet.has(k)) fill=visitColor;
+
+      ctx.fillStyle = fill;
+      ctx.beginPath();
+      ctx.roundRect(x+1,y+1,CELL-2,CELL-2, grid[r][c]===WALL ? 2 : 5);
+      ctx.fill();
+
+      ctx.strokeStyle=COLORS.grid;
+      ctx.lineWidth=0.5;
+      ctx.strokeRect(x,y,CELL,CELL);
+
+      if(grid[r][c]===START) {
+        ctx.font=`${CELL*0.5}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('🧭',x+CELL/2,y+CELL/2+1);
+      } else if(grid[r][c]===GOAL) {
+        ctx.font=`${CELL*0.48}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('💰',x+CELL/2,y+CELL/2+1);
+      }
+    }
+  }
+
+  if(pathCells.length>1) {
+    ctx.strokeStyle = COLORS.path_border;
+    ctx.lineWidth = 4;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    pathCells.forEach(([r,c],i) => {
+      const px=c*CELL+CELL/2, py=r*CELL+CELL/2;
+      i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    });
+    ctx.stroke();
+    ctx.strokeStyle = COLORS.path;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+
+    pathCells.forEach(([r,c]) => {
+      const px=c*CELL+CELL/2, py=r*CELL+CELL/2;
+      ctx.beginPath();
+      ctx.arc(px,py,4,0,Math.PI*2);
+      ctx.fillStyle=COLORS.path_border; ctx.fill();
+      ctx.fillStyle=COLORS.path; ctx.fill();
+    });
+  }
+}
+
+function neighbors(r,c) {
+  return [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]
+    .filter(([nr,nc])=>nr>=0&&nr<ROWS&&nc>=0&&nc<COLS&&grid[nr][nc]!==WALL);
+}
+
+function bfsSteps() {
+  const [sr,sc]=startPos, [gr,gc]=goalPos;
+  const visited=new Map();
+  const queue=[[sr,sc]];
+  visited.set(key(sr,sc), null);
+  const steps=[];
+  let found=false;
+
+  while(queue.length && !found) {
+    const [r,c]=queue.shift();
+    steps.push({type:'visit',r,c});
+    if(r===gr&&c===gc){ found=true; break; }
+    for(const [nr,nc] of neighbors(r,c)) {
+      const k=key(nr,nc);
+      if(!visited.has(k)) {
+        visited.set(k,key(r,c));
+        queue.push([nr,nc]);
+      }
+    }
+  }
+
+  if(found) {
+    const path=[];
+    let cur=key(gr,gc);
+    while(cur!==null){ const r=Math.floor(cur/100),c=cur%100; path.unshift([r,c]); cur=visited.get(cur); }
+    steps.push({type:'path',path});
+  } else { steps.push({type:'nofound'}); }
+  return steps;
+}
+
+function dfsSteps() {
+  const [sr,sc]=startPos, [gr,gc]=goalPos;
+  const visited=new Map();
+  const stack=[[sr,sc]];
+  visited.set(key(sr,sc),null);
+  const steps=[];
+  let found=false;
+
+  while(stack.length && !found) {
+    const [r,c]=stack.pop();
+    steps.push({type:'visit',r,c});
+    if(r===gr&&c===gc){ found=true; break; }
+    for(const [nr,nc] of neighbors(r,c)) {
+      const k=key(nr,nc);
+      if(!visited.has(k)) {
+        visited.set(k,key(r,c));
+        stack.push([nr,nc]);
+      }
+    }
+  }
+
+  if(found) {
+    const path=[];
+    let cur=key(gr,gc);
+    while(cur!==null){ const r=Math.floor(cur/100),c=cur%100; path.unshift([r,c]); cur=visited.get(cur); }
+    steps.push({type:'path',path});
+  } else { steps.push({type:'nofound'}); }
+  return steps;
+}
+
+function heuristic(r,c,gr,gc){return Math.abs(r-gr)+Math.abs(c-gc);}
+
+function astarSteps() {
+  const [sr,sc]=startPos, [gr,gc]=goalPos;
+  const gScore=new Map(), fScore=new Map(), parent=new Map();
+  gScore.set(key(sr,sc),0);
+  fScore.set(key(sr,sc),heuristic(sr,sc,gr,gc));
+  const open=[[sr,sc]];
+  const closed=new Set();
+  parent.set(key(sr,sc),null);
+  const steps=[];
+  let found=false;
+
+  while(open.length && !found) {
+    open.sort((a,b)=>(fScore.get(key(a[0],a[1]))||Infinity)-(fScore.get(key(b[0],b[1]))||Infinity));
+    const [r,c]=open.shift();
+    const k=key(r,c);
+    if(closed.has(k)) continue;
+    closed.add(k);
+    steps.push({type:'visit',r,c});
+    if(r===gr&&c===gc){ found=true; break; }
+
+    for(const [nr,nc] of neighbors(r,c)) {
+      const nk=key(nr,nc);
+      if(closed.has(nk)) continue;
+      const tg=(gScore.get(k)||0)+1;
+      if(tg < (gScore.get(nk)||Infinity)) {
+        parent.set(nk,k);
+        gScore.set(nk,tg);
+        fScore.set(nk,tg+heuristic(nr,nc,gr,gc));
+        open.push([nr,nc]);
+      }
+    }
+  }
+
+  if(found) {
+    const path=[];
+    let cur=key(gr,gc);
+    while(cur!==null){ const r=Math.floor(cur/100),c=cur%100; path.unshift([r,c]); cur=parent.get(cur); }
+    steps.push({type:'path',path});
+  } else { steps.push({type:'nofound'}); }
+  return steps;
+}
+
+function runAlgo() {
+  if(running) return;
+  clearOverlay();
+  updateStats(0, null, 'Running...');
+  const algo = document.getElementById('algo-sel').value;
+  let steps;
+  if(algo==='bfs') steps=bfsSteps();
+  else if(algo==='dfs') steps=dfsSteps();
+  else steps=astarSteps();
+  animQueue=[...steps];
+  running=true;
+  addLog(`Starting ${algo.toUpperCase()}...`);
+  stepAnimate();
+}
+
+function getDelay() {
+  const v=parseInt(document.getElementById('speed').value);
+  return Math.round(300/v);
+}
+
+function stepAnimate() {
+  if(animQueue.length===0){ running=false; visiting=null; draw(); return; }
+  const step=animQueue.shift();
+
+  if(step.type==='visit') {
+    visitedSet.add(key(step.r,step.c));
+    visiting=[step.r,step.c];
+    updateStats(visitedSet.size, null, 'Exploring...');
+    draw();
+    animTimer=setTimeout(stepAnimate, getDelay());
+  } else if(step.type==='path') {
+    visiting=null;
+    pathCells=step.path;
+    updateStats(visitedSet.size, pathCells.length-1, 'Treasure Found!');
+    addLog(`Path length: ${pathCells.length-1} steps`);
+    addLog(`Cells visited: ${visitedSet.size}`);
+    addLog(`Success! Treasure reached.`);
+    running=false;
+    draw();
+  } else {
+    visiting=null;
+    updateStats(visitedSet.size, 0, 'No Path Found');
+    addLog(`No path to treasure!`);
+    running=false;
+    draw();
+  }
+}
+
+function updateStats(visited, path, status) {
+  document.getElementById('s-visited').textContent = visited===null ? '—' : visited;
+  document.getElementById('s-path').textContent = path===null ? '—' : (path===0 ? 'None' : path);
+  document.getElementById('s-status').textContent = status;
+}
+
+function addLog(msg) {
+  const ul=document.getElementById('log-list');
+  if(ul.children.length===1 && ul.children[0].textContent.startsWith('Select')) ul.innerHTML='';
+  const li=document.createElement('li');
+  li.textContent=msg;
+  ul.appendChild(li);
+  ul.scrollTop=ul.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log-list').innerHTML='<li>Select an algorithm and press Run.</li>';
+}
+
+function resetMaze() {
+  if(running){ clearTimeout(animTimer); running=false; }
+  makeGrid();
+  draw();
+  clearLog();
+}
+
+const algoMeta = {
+  bfs:   { badge:'BFS',  cls:'badge-bfs',   desc:'Explores all neighbors level by level. Always finds the shortest path. Great for maps!' },
+  dfs:   { badge:'DFS',  cls:'badge-dfs',   desc:'Dives deep along one path before backtracking. May not find shortest path but uses less memory.' },
+  astar: { badge:'A*',   cls:'badge-astar', desc:'Uses a heuristic (Manhattan distance) to guide search. Finds shortest path efficiently.' }
+};
+
+function onAlgoChange() {
+  const algo=document.getElementById('algo-sel').value;
+  const m=algoMeta[algo];
+  document.getElementById('algo-badge').textContent=m.badge;
+  document.getElementById('algo-badge').className='algo-badge '+m.cls;
+  document.getElementById('algo-desc').textContent=m.desc;
+  if(running){clearTimeout(animTimer);running=false;}
+  clearOverlay(); draw();
+}
+
+let dragging=null;
+
+canvas.addEventListener('mousedown',e=>{
+  if(running) return;
+  const {r,c}=cellAt(e);
+  if(r<0||c<0||r>=ROWS||c>=COLS) return;
+  if(grid[r][c]===START) dragging='start';
+  else if(grid[r][c]===GOAL) dragging='goal';
+  else toggleWall(r,c);
+});
+
+canvas.addEventListener('mousemove',e=>{
+  if(!dragging||running) return;
+  const {r,c}=cellAt(e);
+  if(r<0||c<0||r>=ROWS||c>=COLS) return;
+  if(grid[r][c]===WALL||grid[r][c]===START||grid[r][c]===GOAL) return;
+  if(dragging==='start'){
+    grid[startPos[0]][startPos[1]]=EMPTY;
+    startPos=[r,c]; grid[r][c]=START;
+  } else {
+    grid[goalPos[0]][goalPos[1]]=EMPTY;
+    goalPos=[r,c]; grid[r][c]=GOAL;
+  }
+  clearOverlay(); draw();
+});
+
+canvas.addEventListener('mouseup',()=>dragging=null);
+
+function cellAt(e){
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+  const x=(e.clientX-rect.left)*scaleX, y=(e.clientY-rect.top)*scaleY;
+  return {r:Math.floor(y/CELL), c:Math.floor(x/CELL)};
+}
+
+function toggleWall(r,c){
+  if(r===0||r===ROWS-1||c===0||c===COLS-1) return;
+  grid[r][c] = grid[r][c]===EMPTY ? WALL : EMPTY;
+  clearOverlay(); draw();
+}
+
+makeGrid();
+draw();
+</script>
+</body>
+</html>
